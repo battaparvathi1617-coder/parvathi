@@ -1,0 +1,35 @@
+**logger.js**
+function logger(req, res, next) {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${req.method} ${req.url}`);
+    next();//IMPORTANT: Call next() to pass control to the next middleware function
+}
+module.exports = logger;
+**errorhandler.js**
+function errorHandler(err, req, res, next) {
+    console.error('error:', err.message);
+    res.status(err.status || 500).json({ 
+        error: err.message || 'Internal Server Error' });
+}
+module.exports = errorHandler;
+**server.js**
+const express = require('express');
+const app = express();
+const port = 3000;  
+const logger = require('./Routes/logger'); // Import the logger module
+const errorHandler = require('./Routes/errorHandler'); // Import the error handler module
+app.use(express.json());
+app.use(logger); // Use the logger middleware
+
+app.get('/data', (req, res) => {
+    res.json({ info: 'here is your data' });
+});
+app.get('/error', (req, res, next) => {
+    const err = new Error('Something went wrong!');
+    err.status = 400;
+    next(err); // Pass the error to the error handler
+});
+app.use(errorHandler); // Use the error handler middleware
+app.listen(port,()=>{
+    console.log(`Server is running on http://localhost:${port}`);
+});
